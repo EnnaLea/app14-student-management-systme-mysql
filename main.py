@@ -200,6 +200,7 @@ class EditDialog(QDialog):
 
         # Refresh the table
         main_window.load_data()
+        self.close()
 
 
 class DeleteDialog(QDialog):
@@ -284,7 +285,7 @@ class InsertDialog(QDialog):
         cursor.close()
         connection.close()
         main_window.load_data()
-
+        self.close()
 
 class SearchDialog(QDialog):
     def __init__(self):
@@ -313,15 +314,60 @@ class SearchDialog(QDialog):
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM students WHERE name = %s", (name,))
         result = cursor.fetchall()
-        row = list(result)[0]
-        print(row)
-        items = main_window.table.findItems("John Smith", Qt.MatchFlag.MatchFixedString)
-        for item in items:
-            print(item)
-            main_window.table.item(item.row(), 1).setSelected(True)
+
+        if result:
+            # Clear previous selections
+            main_window.table.clearSelection()
+
+            # Iterate through the results and select the corresponding rows in the table
+            for row in result:
+                student_id = row[0]
+                items = main_window.table.findItems(str(student_id), Qt.MatchFlag.MatchExactly)
+                for item in items:
+                    main_window.table.setCurrentItem(item)
+                    main_window.table.item(item.row(), 1).setSelected(True)
+        else:
+            QMessageBox.information(self, "Not Found", "No student found with that name.")
 
         cursor.close()
         connection.close()
+
+# class SearchDialog(QDialog):
+#     def __init__(self):
+#         super().__init__()
+#         # Set window title and size
+#         self.setWindowTitle("Search Student")
+#         self.setFixedWidth(300)
+#         self.setFixedHeight(300)
+#
+#         # Create layout and input widget
+#         layout = QVBoxLayout()
+#         self.student_name = QLineEdit()
+#         self.student_name.setPlaceholderText("Name")
+#         layout.addWidget(self.student_name)
+#
+#         # Create button
+#         button = QPushButton("Search")
+#         button.clicked.connect(self.search)
+#         layout.addWidget(button)
+#
+#         self.setLayout(layout)
+#
+#     def search(self):
+#         name = self.student_name.text()
+#         connection = DataBaseConnection().connect()
+#         cursor = connection.cursor()
+#         cursor.execute("SELECT * FROM students WHERE name = %s", (name,))
+#         result = cursor.fetchall()
+#         row = list(result)[0]
+#         print(row)
+#         items = main_window.table.findItems("John Smith", Qt.MatchFlag.MatchFixedString)
+#         for item in items:
+#             print(item)
+#             main_window.table.item(item.row(), 1).setSelected(True)
+#
+#         cursor.close()
+#         connection.close()
 
 
 app = QApplication(sys.argv)
